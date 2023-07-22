@@ -3,7 +3,9 @@
     <div class="container">
         <div class="row justify-content-lg-center">
             <div class="col-4">
-                <a href='{% url 'mailing:create_client' %}' class="btn btn-primary btn-block">Добавить клиента</a>
+                {% if perms.mailing.add_client %}
+                    <a href='{% url 'mailing:create_client' %}' class="btn btn-primary btn-block">Добавить клиента</a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -14,8 +16,14 @@
                     <h4>{{ client }}</h4>
                     <h5><p class="card-text text-info">О клиенте: {{ client.comment|truncatewords:10 }}</p></h5>
                     <h6><p class="card-text text-info">Почта клиента: {{ client.email }}</p></h6>
-                    <a href="{% url 'mailing:update_client' client.id %}">Редактировать</a>
-                    <a href="{% url 'mailing:delete_client' client.id %}">Удалить</a><br>
+                    <div class="btn-group">
+                        {% if client.user == request.user or request.user.is_superuser %}
+                            <a href='{% url 'mailing:update_client' client.id %}'
+                               class="btn btn-outline-primary">Редактировать</a>
+                            <a href='{% url 'mailing:delete_client' client.id %}'
+                               class="btn btn-outline-primary">Удалить</a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

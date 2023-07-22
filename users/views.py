@@ -17,7 +17,7 @@ class RegisterView(CreateView):
             fields = form.save()
             sendmail(
                 f'Для верификации почты пройдите по ссылке http://127.0.0.1:8000/users/confirm_email/{fields.pk}',
-                (fields.email, ),
+                (fields.email,),
             )
         return super().form_valid(form)
 
@@ -34,8 +34,6 @@ class ConfirmPage(TemplateView):
             user.is_staff = True
             user.save()
         return context_data
-
-
 
 
 class ProfileView(UpdateView):

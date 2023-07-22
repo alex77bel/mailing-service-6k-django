@@ -1,5 +1,8 @@
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
+
+from users.models import User
 
 
 class Client(models.Model):
@@ -9,6 +12,7 @@ class Client(models.Model):
                             verbose_name='ФИО')
     email = models.EmailField(verbose_name='Почта')
     comment = models.TextField(verbose_name='Комментарий')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='Владелец', null=True)
 
     def __str__(self):
         return f'Клиент: {self.name}'
@@ -26,6 +30,7 @@ class Message(models.Model):
                              verbose_name='Тема')
     body = models.TextField(default=None,
                             verbose_name='Сообщение')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='Владелец', null=True)
 
     def __str__(self):
         return f'Тема сообщения: {self.title}'
@@ -61,11 +66,14 @@ class Mailing(models.Model):
                               choices=Status.choices,
                               default=Status.CREATED,
                               verbose_name='Статус рассылки')
+    is_active = models.BooleanField(default=True, verbose_name='Разрешение рассылки')
     message = models.ForeignKey(Message,
                                 on_delete=models.CASCADE,
                                 verbose_name='Сообщение')
     clients = models.ManyToManyField(Client,
-                                     verbose_name='Клиенты')
+                                     verbose_name='Клиенты',
+                                     related_name='mailing')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='Владелец', null=True)
 
     def get_label(self, frequency):
         for label in self.Frequency.choices:

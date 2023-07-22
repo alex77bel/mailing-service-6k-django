@@ -1,30 +1,42 @@
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.http import Http404
 from django.urls import reverse_lazy, reverse
 from django.views import generic
 from mailing import models
 from mailing import forms
 
 
-class MailingCreateView(generic.CreateView):
+class EditCheckMixin:
+    # проверка пользователя на автора или суперюзера
+    def get_object(self, queryset=None):
+        self.object = super().get_object(queryset)
+        if self.object.user != self.request.user and not self.request.user.is_superuser:
+            raise Http404('Изменять может только владелец')
+        return self.object
+
+
+class SetUserMixin:
+    # заполнение поля 'user' модели текущим пользователем
+    def form_valid(self, form):
+        self.object = form.save()
+        self.object.user = self.request.user
+        self.object.save()
+        return super().form_valid(form)
+
+
+class PermissionAndLoginRequiredMixin(PermissionRequiredMixin, LoginRequiredMixin):
     model = models.Mailing
+
+
+class MailingCreateView(PermissionRequiredMixin, SetUserMixin, generic.CreateView):
+    permission_required = 'mailing.add_mailing'
     form_class = forms.MailingForm
-    # fields = ('time', 'frequency', 'clients', 'message')
     template_name = 'mailing/form.html'
 
     success_url = reverse_lazy('mailing:mailings')
     extra_context = {
         'title': 'Создание рассылки'
     }
-
-    # def form_valid(self, form):
-    #     """If the form is valid, save the associated model."""
-    #     if form.is_valid():
-    #         fields = form.save()
-    #         # print(fields.time, fields.frequency, fields.clients, fields.message)
-
-
-        # return super().form_valid(form)
-
-
 
 
 class MailingsView(generic.ListView):
@@ -33,16 +45,10 @@ class MailingsView(generic.ListView):
     extra_context = {
         'title': 'Рассылки',
     }
-    # print(Mailing.objects.values('id','clients'))
-    # q = Mailing.objects.get(id='3').clients.all()
-    # for i in q:
-    #     print(i.name)
-    # print(q)
 
 
-
-class MailingDeleteView(generic.DeleteView):
-    model = models.Mailing
+class MailingDeleteView(PermissionAndLoginRequiredMixin, EditCheckMixin, generic.DeleteView):
+    permission_required = 'mailing.delete_mailing'
     success_url = reverse_lazy('mailing:mailings')
     template_name = 'mailing/confirm_delete.html'
     extra_context = {
@@ -50,17 +56,13 @@ class MailingDeleteView(generic.DeleteView):
     }
 
 
-class MailingUpdateView(generic.UpdateView):
-    model = models.Mailing
+class MailingUpdateView(PermissionAndLoginRequiredMixin, EditCheckMixin, generic.UpdateView):
+    permission_required = 'mailing.change_mailing'
     form_class = forms.MailingForm
-    # fields = ('time', 'frequency', 'status', 'clients', 'message')
     template_name = 'mailing/form.html'
     extra_context = {
         'title': 'Изменить данные рассылки'
     }
-
-    # q = models.Client.objects.get(name='Александр1')
-    # print(q.mailing_set.all())
 
     def get_success_url(self):
         return reverse('mailing:mailings')

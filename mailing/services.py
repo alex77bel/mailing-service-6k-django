@@ -27,30 +27,31 @@ def mailing_processing():
         return datetime.timedelta() < delta <= mailing_duration
 
     for mailing in Mailing.objects.all():
-        if mailing.status == 'CR':  # статус рассылки - создана, надо проверить необходимость отправки
-            if check_mailing_time_is_running():  # если наступило время рассылки
-                mailing.status = 'LA'  # статус рассылки - запущена
-                mailing.save()
-                mailing_attempt = sendmail(mailing.message.body,
-                                           [client.email for client in mailing.clients.all()])  # запуск рассылки
-                server_request = str(mailing) + \
-                                 ', прошла успешно' if mailing_attempt[0] \
-                    else f', прошла c ошибками {mailing_attempt[1]}'
-                MailingLogs.objects.create(time=datetime.datetime.now(),
-                                           status=mailing_attempt[0],
-                                           server_request=server_request)
-                mailing.status = 'CM'  # статус рассылки - завершена
-                mailing.save()
+        if mailing.is_active:  # если рассылка разрешена
+            if mailing.status == 'CR':  # статус рассылки - создана, надо проверить необходимость отправки
+                if check_mailing_time_is_running():  # если наступило время рассылки
+                    mailing.status = 'LA'  # статус рассылки - запущена
+                    mailing.save()
+                    mailing_attempt = sendmail(mailing.message.body,
+                                               [client.email for client in mailing.clients.all()])  # запуск рассылки
+                    server_request = str(mailing) + \
+                                     ', прошла успешно' if mailing_attempt[0] \
+                        else f', прошла c ошибками {mailing_attempt[1]}'
+                    MailingLogs.objects.create(time=datetime.datetime.now(),
+                                               status=mailing_attempt[0],
+                                               server_request=server_request)
+                    mailing.status = 'CM'  # статус рассылки - завершена
+                    mailing.save()
 
-        elif mailing.status == 'CM':  # статус рассылки - завершена, надо проверить необходимость сброса статуса
-            if not check_mailing_time_is_running():  # если время рассылки закончилось
-                mailing.status = 'CR'  # сброс статуса
-                # установка следующей даты запуска рассылки
-                match mailing.frequency:
-                    case 'DA':
-                        mailing.date += datetime.timedelta(days=1)
-                    case 'WE':
-                        mailing.date += datetime.timedelta(days=7)
-                    case 'MO':
-                        mailing.date += datetime.timedelta(days=30)
-                mailing.save()
+            elif mailing.status == 'CM':  # статус рассылки - завершена, надо проверить необходимость сброса статуса
+                if not check_mailing_time_is_running():  # если время рассылки закончилось
+                    mailing.status = 'CR'  # сброс статуса
+                    # установка даты следующего запуска рассылки
+                    match mailing.frequency:
+                        case 'DA':
+                            mailing.date += datetime.timedelta(days=1)
+                        case 'WE':
+                            mailing.date += datetime.timedelta(days=7)
+                        case 'MO':
+                            mailing.date += datetime.timedelta(days=30)
+                    mailing.save()

@@ -3,13 +3,12 @@ from django.views import generic
 
 from mailing.forms import ClientForm
 from mailing.models import Client
+from mailing.views.mailing_views import SetUserMixin, EditCheckMixin
 
 
-class ClientCreateView(generic.CreateView):
-    model = Client
+class ClientCreateView(SetUserMixin, generic.CreateView):
     form_class = ClientForm
     template_name = 'mailing/form.html'
-    # fields = ('name', 'email', 'comment')
     success_url = reverse_lazy('mailing:clients')
     extra_context = {
         'title': 'Создание клиента рассылки'
@@ -24,7 +23,7 @@ class ClientsView(generic.ListView):
     }
 
 
-class ClientDeleteView(generic.DeleteView):
+class ClientDeleteView(EditCheckMixin, generic.DeleteView):
     model = Client
     success_url = reverse_lazy('mailing:clients')
     template_name = 'mailing/confirm_delete.html'
@@ -33,10 +32,9 @@ class ClientDeleteView(generic.DeleteView):
     }
 
 
-class ClientUpdateView(generic.UpdateView):
+class ClientUpdateView(EditCheckMixin, generic.UpdateView):
     model = Client
     form_class = ClientForm
-    # fields = ('name', 'email', 'comment')
     template_name = 'mailing/form.html'
     extra_context = {
         'title': 'Изменить данные клиента'

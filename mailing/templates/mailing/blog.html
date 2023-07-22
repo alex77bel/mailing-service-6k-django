@@ -1,18 +1,17 @@
 {% extends 'mailing/base.html' %}
 {% block content %}
-
     <div class="container">
-        {% if perms.catalog.add_pos %}
-            <div class="row">
-                <div class="col-4">
-                    <a href='{% url 'mailing:create_post' %}' class="btn btn-success m-2"> Написать статью </a>
-                </div>
+        <div class="row justify-content-center">
+            <div class="col-4">
+                {% if perms.mailing.add_post %}
+                    <a href='{% url 'mailing:create_post' %}' class="btn btn-primary btn-block"> Написать статью </a>
+                {% endif %}
             </div>
-        {% endif %}
+        </div>
     </div>
     {% for post in object_list %}
         <div class="col-md-12">
-            <div class="card mb-4 box-shadow text-primary m-2">
+            <div class="card m-2 box-shadow text-primary">
                 <div class="card-body">
                     <div class="card-title">
                         <h4>{{ post }}</h4>
@@ -24,12 +23,12 @@
                             <a href='{% url 'mailing:post' post.created.year post.created.month post.created.day post.slug %}'
                                class="btn btn-outline-primary">Перейти к статье</a>
 
-                            {% if perms.catalog.change_post %}
+                            {% if perms.mailing.change_post %}
                                 <a href='{% url 'mailing:update_post' post.created.year post.created.month post.created.day post.slug %}'
                                    class="btn btn-outline-primary">Редактировать</a>
                             {% endif %}
 
-                            {% if perms.catalog.delete_post %}
+                            {% if perms.mailing.delete_post %}
                                 <a href='{% url 'mailing:delete_post' post.created.year post.created.month post.created.day post.slug %}'
                                    class="btn btn-outline-primary">Удалить</a>
                             {% endif %}

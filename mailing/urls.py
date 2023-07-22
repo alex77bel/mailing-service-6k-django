@@ -1,13 +1,13 @@
 from django.urls import path
+from django.views.decorators.cache import cache_page
 
 from mailing.apps import MailingConfig
-from mailing.views import client_views, message_views, mailing_views, blog_views
-
+from mailing.views import client_views, message_views, mailing_views, blog_views, main_views
 
 app_name = MailingConfig.name
 
 urlpatterns = [
-    path('', client_views.ClientsView.as_view(), name='main'),
+    path('', cache_page(60)(main_views.MainView.as_view()), name='main'),
 
     path('clients/', client_views.ClientsView.as_view(), name='clients'),
     path('clients/create/', client_views.ClientCreateView.as_view(), name='create_client'),
@@ -24,10 +24,10 @@ urlpatterns = [
     path('mailings/update/<int:pk>', mailing_views.MailingUpdateView.as_view(), name='update_mailing'),
     path('mailings/delete/<int:pk>', mailing_views.MailingDeleteView.as_view(), name='delete_mailing'),
 
-    path('blog/', blog_views.BlogView.as_view(), name='blog'),
+    path('blog/', cache_page(60)(blog_views.BlogView.as_view()), name='blog'),
     path('blog/create_post/', blog_views.BlogPostCreateView.as_view(), name='create_post'),
     path('blog/post/<int:year>/<int:month>/<int:day>/<slug:slug>/',
-         blog_views.BlogPostDetailView.as_view(), name='post'),
+         cache_page(60)(blog_views.BlogPostDetailView.as_view()), name='post'),
     path('blog/update_post/<int:year>/<int:month>/<int:day>/<slug:slug>/',
          blog_views.BlogPostUpdateView.as_view(), name='update_post', ),
     path('blog/delete_post/<int:year>/<int:month>/<int:day>/<slug:slug>/',

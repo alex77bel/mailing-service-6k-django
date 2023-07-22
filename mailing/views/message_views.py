@@ -1,14 +1,15 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.urls import reverse_lazy, reverse
 from django.views import generic
 
 from mailing.forms import MessageForm
 from mailing.models import Message
+from mailing.views.mailing_views import SetUserMixin, EditCheckMixin
 
 
-class MessageCreateView(generic.CreateView):
-    model = Message
+class MessageCreateView(PermissionRequiredMixin, SetUserMixin, generic.CreateView):
+    permission_required = 'mailing.add_message'
     form_class = MessageForm
-    # fields = ('title', 'body')
     template_name = 'mailing/form.html'
     success_url = reverse_lazy('mailing:messages')
     extra_context = {
@@ -24,7 +25,8 @@ class MessagesView(generic.ListView):
     }
 
 
-class MessageDeleteView(generic.DeleteView):
+class MessageDeleteView(PermissionRequiredMixin, EditCheckMixin, generic.DeleteView):
+    permission_required = 'mailing.delete_mailing'
     model = Message
     success_url = reverse_lazy('mailing:messages')
     template_name = 'mailing/confirm_delete.html'
@@ -33,10 +35,10 @@ class MessageDeleteView(generic.DeleteView):
     }
 
 
-class MessageUpdateView(generic.UpdateView):
+class MessageUpdateView(PermissionRequiredMixin, EditCheckMixin, generic.UpdateView):
+    permission_required = 'mailing.change_message'
     model = Message
     form_class = MessageForm
-    # fields = ('title', 'body')
     template_name = 'mailing/form.html'
     extra_context = {
         'title': 'Изменить сообщение'
