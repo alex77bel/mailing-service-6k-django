@@ -1,0 +1,16 @@
+{% extends 'mailing/base.html' %}
+{% block content %}
+
+    {% for log in object_list %}
+        <div class="col-md-12">
+            <div class="card box-shadow text-primary">
+                <div class="card-body">
+                    <h6>{{ log.time }}</h6>
+                    <h6>{{ log.server_request }}</h6>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+
+{% endblock %}
