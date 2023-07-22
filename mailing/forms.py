@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 from mailing import models
 
@@ -20,10 +22,18 @@ class MessageForm(StyleFormMixin, forms.ModelForm):
         model = models.Message
         fields = ('title', 'body')
 
+
 class MailingForm(StyleFormMixin, forms.ModelForm):
     class Meta:
         model = models.Mailing
-        fields = ('time', 'frequency', 'clients', 'message')
+        fields = ('date', 'time', 'frequency', 'clients', 'message')
+
+    def clean(self):  # время рассылки - не ранее текущего
+        cleaned_data = super().clean()
+        if datetime.datetime.now() > datetime.datetime.combine(self.cleaned_data['date'], self.cleaned_data['time']):
+            self.cleaned_data['date'] = datetime.datetime.now().date()
+            self.cleaned_data['time'] = datetime.datetime.now().time().replace(microsecond=0)
+        return cleaned_data
 
 
 class BlogForm(StyleFormMixin, forms.ModelForm):

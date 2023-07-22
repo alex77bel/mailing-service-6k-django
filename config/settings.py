@@ -30,16 +30,25 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS = [
+STANDARD_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+]
 
+USER_APPS = [
+    'django_crontab',
     'mailing.apps.MailingConfig',
     'users.apps.UsersConfig',
+]
+
+INSTALLED_APPS = STANDARD_APPS + USER_APPS
+
+CRONJOBS = [
+    ('* * * * *', 'mailing.cron.my_scheduled_job'),
 ]
 
 MIDDLEWARE = [
@@ -112,11 +121,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ru-ru'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -141,7 +150,7 @@ AUTH_USER_MODEL = 'users.User'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 EMAIL_HOST = 'smtp.yandex.ru'
 EMAIL_PORT = 465
@@ -153,7 +162,7 @@ SERVER_EMAIL = EMAIL_HOST_USER
 EMAIL_ADMIN = EMAIL_HOST_USER
 
 
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 
 # EMAIL_HOST_USER = 'alex77bel@yandex.ru'
 # EMAIL_HOST_PASSWORD = 'cmbxsupbbisswxwe'

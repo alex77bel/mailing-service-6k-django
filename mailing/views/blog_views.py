@@ -5,7 +5,6 @@ from django.views import generic
 
 from mailing.forms import BlogForm
 from mailing.models import Post
-from mailing.services import sendmail
 
 
 class BlogPostCreateView(mixins.PermissionRequiredMixin, generic.CreateView):

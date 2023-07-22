@@ -15,14 +15,14 @@ class MailingCreateView(generic.CreateView):
         'title': 'Создание рассылки'
     }
 
-    def form_valid(self, form):
-        """If the form is valid, save the associated model."""
-        if form.is_valid():
-            fields = form.save()
-            # print(fields.time, fields.frequency, fields.clients, fields.message)
+    # def form_valid(self, form):
+    #     """If the form is valid, save the associated model."""
+    #     if form.is_valid():
+    #         fields = form.save()
+    #         # print(fields.time, fields.frequency, fields.clients, fields.message)
 
 
-        return super().form_valid(form)
+        # return super().form_valid(form)
 
 
 

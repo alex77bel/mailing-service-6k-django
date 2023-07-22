@@ -1,9 +1,12 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Client(models.Model):
-    # Клиент сервиса: контактный email, фио, комментарий
-    name = models.CharField(max_length=100, verbose_name='ФИО')
+    # Клиент сервиса
+
+    name = models.CharField(max_length=100,
+                            verbose_name='ФИО')
     email = models.EmailField(verbose_name='Почта')
     comment = models.TextField(verbose_name='Комментарий')
 
@@ -17,10 +20,12 @@ class Client(models.Model):
 
 
 class Message(models.Model):
-    # Сообщение для рассылки (тема письма, тело письма)
+    # Сообщение для рассылки
 
-    title = models.CharField(max_length=250, verbose_name='Тема')
-    body = models.TextField(verbose_name='Сообщение', default=None)
+    title = models.CharField(max_length=250,
+                             verbose_name='Тема')
+    body = models.TextField(default=None,
+                            verbose_name='Сообщение')
 
     def __str__(self):
         return f'Тема сообщения: {self.title}'
@@ -32,37 +37,42 @@ class Message(models.Model):
 
 
 class Mailing(models.Model):
-    # Рассылка: время рассылки, периодичность, статус рассылки
+    # Рассылка
 
-    class Status(models.TextChoices):  # статус рассылки (завершена, создана, запущена)
-        COMPLETED = 'CM', 'Completed'  # устанавливается после завершения
-        CREATED = 'CR', 'Created'  # устанавливается после создания
-        LAUNCHED = 'LA', 'Launched'  # устанавливается при запуске
+    class Status(models.TextChoices):  # подкласс для выбора статуса рассылки
+        COMPLETED = 'CM', 'completed'  # устанавливается после завершения
+        CREATED = 'CR', 'created'  # устанавливается после создания
+        LAUNCHED = 'LA', 'launched'  # устанавливается при запуске
 
-    class Frequency(models.TextChoices):  # периодичность (раз в день, раз в неделю, раз в месяц)
-        ONCE_A_DAY = 'DA', 'Once a day'
-        ONCE_A_WEEK = 'WE', 'Once a week'
-        ONCE_A_MONTH = 'MO', 'Once a month'
+    class Frequency(models.TextChoices):  # подкласс для выбора периодичности
+        ONCE_A_DAY = 'DA', 'ежедневно'
+        ONCE_A_WEEK = 'WE', 'еженедельно'
+        ONCE_A_MONTH = 'MO', 'ежемесячно'
 
-    time = models.TimeField(verbose_name='Время начала рассылки (ч:м:с)', null=False, blank=False)
+    time = models.TimeField(default=timezone.now,
+                            verbose_name='Время начала рассылки, (чч:мм:сс)')
+    date = models.DateField(default=timezone.now,
+                            verbose_name='Дата следующей рассылки, (дд.мм.гггг)')
     frequency = models.CharField(max_length=2,
                                  choices=Frequency.choices,
                                  default=Frequency.ONCE_A_DAY,
-                                 verbose_name='Периодичность рассылки'
-                                 )
-    status = models.CharField(max_length=2,
+                                 verbose_name='Периодичность рассылки')
+    status = models.CharField(max_length=2,  # статус
                               choices=Status.choices,
                               default=Status.CREATED,
-                              verbose_name='Статус рассылки'
-                              )
-    # связи:
-    # с Клиентами - многие ко многим (в рассылку могут входить несколько клиентов, клиент может быть в разных рассылках)
-    # и Сообщениями - один ко многим (сообщение может входить во много рассылок, в рассылке - одно сообщение)
-    message = models.ForeignKey(Message, on_delete=models.CASCADE, verbose_name='Сообщение', null=False, blank=False)
-    clients = models.ManyToManyField(Client, verbose_name='Клиенты', blank=True)
+                              verbose_name='Статус рассылки')
+    message = models.ForeignKey(Message,
+                                on_delete=models.CASCADE,
+                                verbose_name='Сообщение')
+    clients = models.ManyToManyField(Client,
+                                     verbose_name='Клиенты')
+
+    def get_label(self, frequency):
+        for label in self.Frequency.choices:
+            if label[0] == frequency: return label[1]
 
     def __str__(self):
-        return f'Рассылка в: {self.time}'
+        return f'Рассылка в {self.time} с {self.date.strftime("%d.%m.%Y")}, {self.get_label(self.frequency)}'
 
     class Meta:
         verbose_name = 'Рассылка'
@@ -70,31 +80,37 @@ class Mailing(models.Model):
         ordering = ('-time',)
 
 
-class MailingAttempt(models.Model):
-    # Попытка рассылки (дата и время последней попытки, статус попытки, ответ почтового сервера)
+class MailingLogs(models.Model):
+    # Лог попытки рассылки
 
-    class Status(models.TextChoices):  # статус (активная, завершенная)
-        ACTIVE = 'AC', 'Active'
-        COMPLETED = 'CO', 'Completed'
+    time = models.DateTimeField(verbose_name='Дата и время последней рассылки')
+    status = models.BooleanField()
+    server_request = models.CharField(max_length=250,
+                                      verbose_name='Ответ сервера')
 
-    time = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=2,
-                              choices=Status.choices,
-                              default=Status.ACTIVE,
-                              verbose_name='Статус попытки рассылки'
-                              )
-    server_request = models.CharField(max_length=250)
-    # связь с Рассылкой - один ко многим (у рассылки может быть несколько попыток, по расписанию)
-    mailing = models.ForeignKey(Mailing, on_delete=models.SET_NULL, null=True)
+    class Meta:
+        verbose_name = 'Попытка рассылки'
+        verbose_name_plural = 'Попытки рассылки'
+        ordering = ('-time',)
+
 
 class Post(models.Model):
-    title = models.CharField(max_length=255, verbose_name='Заголовок')
-    slug = models.CharField(max_length=255, verbose_name='Слаг', unique_for_date='created')
+    # Статья блога
+
+    title = models.CharField(max_length=255,
+                             verbose_name='Заголовок')
+    slug = models.CharField(max_length=255,
+                            unique_for_date='created',
+                            verbose_name='Слаг')
     content = models.TextField(verbose_name='Содержимое')
-    preview = models.ImageField(upload_to='blog/', verbose_name='Изображение')
-    created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    published = models.BooleanField(verbose_name='Признак публикации', default=False)
-    views = models.PositiveIntegerField(verbose_name='Количество просмотров', default=0)
+    preview = models.ImageField(upload_to='blog/',
+                                verbose_name='Изображение')
+    created = models.DateTimeField(auto_now_add=True,
+                                   verbose_name='Дата создания')
+    published = models.BooleanField(default=False,
+                                    verbose_name='Признак публикации')
+    views = models.PositiveIntegerField(default=0,
+                                        verbose_name='Количество просмотров')
 
     def add_view(self):
         self.views += 1
