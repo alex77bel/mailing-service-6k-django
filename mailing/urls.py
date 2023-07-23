@@ -7,7 +7,7 @@ from mailing.views import client_views, message_views, mailing_views, blog_views
 app_name = MailingConfig.name
 
 urlpatterns = [
-    path('', cache_page(60)(main_views.MainView.as_view()), name='main'),
+    path('', main_views.MainView.as_view(), name='main'),
 
     path('clients/', client_views.ClientsView.as_view(), name='clients'),
     path('clients/create/', client_views.ClientCreateView.as_view(), name='create_client'),

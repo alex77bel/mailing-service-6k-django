@@ -1,10 +1,23 @@
 import datetime
 from smtplib import SMTPException
 
+from django.core.cache import cache
 from django.core.mail import send_mail
 
 from config import settings
-from mailing.models import Mailing, MailingLogs
+from mailing.models import Mailing, MailingLogs, Post
+
+
+def get_posts_cached(n: int):  # получает n случайных статей и хранит их в кэше
+    if settings.CACHE_ENABLED:  # если кэш включен
+        key = 'posts'
+        posts = cache.get(key)  # ищем нужный ключ
+        if posts is None:  # если не нашли
+            posts = Post.objects.all()  # берем из бд
+            cache.set(key, posts)  # и кэшируем
+    else:
+        posts = Post.objects.all()  # если кэш отключен, берем из бд
+    return posts.order_by('?')[:n]
 
 
 def sendmail(message, recipient, subject='Рассылка Django'):  # отправка письма

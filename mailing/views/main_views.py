@@ -1,6 +1,7 @@
 from django.views import generic
 
 from mailing.models import Client, Mailing, Post
+from mailing.services import get_posts_cached
 
 
 class MainView(generic.TemplateView):
@@ -16,6 +17,6 @@ class MainView(generic.TemplateView):
             if client.mailing.count() == 1:
                 unique_clients.append(client.name)
         context['unique_clients'] = ', '.join(unique_clients)
-        context['posts'] = Post.objects.order_by('?')[:3]
+        context['posts'] = get_posts_cached(3)
 
         return context
